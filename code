@@ -1,0 +1,43 @@
+import tkinter as tk
+from tkinter import Button
+from PIL import Image, ImageTk
+
+# Tkinter Window
+root = tk.Tk()
+root.title("Rock, Paper, Scissors")
+root.geometry("700x700")
+
+# Change Background Color
+root.configure(bg="#fee4dc")  # Set background color of the root window
+
+# Load images
+rock_image = Image.open("rock.png").convert("RGBA")
+rock_image = rock_image.resize((100, 150))  # Resize to fit the button size
+rock_image = ImageTk.PhotoImage(rock_image)  # Convert to Tkinter-compatible image
+
+paper_image = Image.open("paper.png").convert("RGBA")
+paper_image = paper_image.resize((100, 150))
+paper_image = ImageTk.PhotoImage(paper_image)
+
+scissors_image = Image.open("scissors.png").convert("RGBA")
+scissors_image = scissors_image.resize((100, 150))
+scissors_image = ImageTk.PhotoImage(scissors_image)
+
+# Create Buttons with images
+frame = tk.Frame(root, bg="#fee4dc")  # Set the frame background to match the root window
+frame.pack(side="bottom", pady=40)  # Pack the frame at the bottom of the window
+
+# Rock Button
+rock_btn = Button(frame, image=rock_image, command=lambda: print("Rock Selected"), borderwidth=0, relief="flat")  # No border and flat relief
+rock_btn.pack(side="left", padx=40)  # Place button on the left side of the frame
+
+# Paper Button
+paper_btn = Button(frame, image=paper_image, command=lambda: print("Paper Selected"), borderwidth=0, relief="flat")  # No border and flat relief
+paper_btn.pack(side="left", padx=40)  # Place button on the left side of the frame
+
+# Scissors Button
+scissors_btn = Button(frame, image=scissors_image, command=lambda: print("Scissors Selected"), borderwidth=0, relief="flat")  # No border and flat relief
+scissors_btn.pack(side="left", padx=40)  # Place button on the left side of the frame
+
+# Run Tkinter
+root.mainloop()
