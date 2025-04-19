@@ -1,43 +1,183 @@
 import tkinter as tk
-from tkinter import Button
+from tkinter import Button, Label
 from PIL import Image, ImageTk
+import random
+import pygame
+
+# Initialize pygame mixer for music
+pygame.mixer.init()
 
 # Tkinter Window
 root = tk.Tk()
 root.title("Rock, Paper, Scissors")
-root.geometry("700x700")
+root.geometry("700x750")
+root.configure(bg="#fee4dc")
 
-# Change Background Color
-root.configure(bg="#fee4dc")  # Set background color of the root window
+# Load and resize images with transparency handling
+def load_image(file):
+    try:
+        img = Image.open(file).convert("RGBA")
+        img = img.resize((100, 150))
+        return ImageTk.PhotoImage(img)
+    except Exception as e:
+        print(f"Error loading image {file}: {e}")
+        return None
 
-# Load images
-rock_image = Image.open("rock.png").convert("RGBA")
-rock_image = rock_image.resize((100, 150))  # Resize to fit the button size
-rock_image = ImageTk.PhotoImage(rock_image)  # Convert to Tkinter-compatible image
+# Load a small square image for the reset button
+def load_square_image(file):
+    try:
+        img = Image.open(file).convert("RGBA")
+        img = img.resize((50, 50))  # smaller and square
+        return ImageTk.PhotoImage(img)
+    except Exception as e:
+        print(f"Error loading image {file}: {e}")
+        return None
 
-paper_image = Image.open("paper.png").convert("RGBA")
-paper_image = paper_image.resize((100, 150))
-paper_image = ImageTk.PhotoImage(paper_image)
+rock_img = load_image("rock.png")
+paper_img = load_image("paper.png")
+scissors_img = load_image("scissors.png")
+reset_img = load_square_image("reset.png")  # square and small
 
-scissors_image = Image.open("scissors.png").convert("RGBA")
-scissors_image = scissors_image.resize((100, 150))
-scissors_image = ImageTk.PhotoImage(scissors_image)
+images = {
+    "Rock": rock_img,
+    "Paper": paper_img,
+    "Scissors": scissors_img
+}
+choices = ["Rock", "Paper", "Scissors"]
 
-# Create Buttons with images
-frame = tk.Frame(root, bg="#fee4dc")  # Set the frame background to match the root window
-frame.pack(side="bottom", pady=40)  # Pack the frame at the bottom of the window
+player_score = 0
+ai_score = 0
 
-# Rock Button
-rock_btn = Button(frame, image=rock_image, command=lambda: print("Rock Selected"), borderwidth=0, relief="flat")  # No border and flat relief
-rock_btn.pack(side="left", padx=40)  # Place button on the left side of the frame
+# Score frame (top)
+score_frame = tk.Frame(root, bg="#fee4dc")
+score_frame.pack(pady=20)
 
-# Paper Button
-paper_btn = Button(frame, image=paper_image, command=lambda: print("Paper Selected"), borderwidth=0, relief="flat")  # No border and flat relief
-paper_btn.pack(side="left", padx=40)  # Place button on the left side of the frame
+player_score_label = Label(score_frame, text="Player: 0", font=("Arial", 16), bg="#fee4dc", fg="black")
+player_score_label.grid(row=0, column=0, padx=40)
 
-# Scissors Button
-scissors_btn = Button(frame, image=scissors_image, command=lambda: print("Scissors Selected"), borderwidth=0, relief="flat")  # No border and flat relief
-scissors_btn.pack(side="left", padx=40)  # Place button on the left side of the frame
+# Function to reset scores
+def reset_scores():
+    global player_score, ai_score
+    player_score = 0
+    ai_score = 0
+    player_score_label.config(text=f"Player: {player_score}")
+    ai_score_label.config(text=f"AI: {ai_score}")
+    result_label.config(text="", fg="#fee4dc")
+    player_image_label.config(image="")
+    ai_image_label.config(image="")
+    player_label.config(text="You Picked:")
+    ai_label.config(text="AI Picked:")
 
-# Run Tkinter
+# Reset button between scores
+if reset_img:
+    reset_button = Button(score_frame, image=reset_img, command=reset_scores,
+                          borderwidth=0, relief="flat", highlightthickness=0, bg="#fee4dc")
+else:
+    reset_button = Button(score_frame, text="Reset", command=reset_scores,
+                          font=("Arial", 12), bg="#fee4dc", width=4, height=2)
+
+reset_button.grid(row=0, column=1, padx=20, pady=10)
+
+ai_score_label = Label(score_frame, text="AI: 0", font=("Arial", 16), bg="#fee4dc", fg="black")
+ai_score_label.grid(row=0, column=2, padx=40)
+
+# Result label
+result_label = Label(root, text="", font=("Arial", 20, "bold"), bg="#fee4dc", fg="black")
+result_label.pack(pady=20)
+
+# Display frame for picks
+display_frame = tk.Frame(root, bg="#fee4dc")
+display_frame.pack(pady=20)
+
+player_frame = tk.Frame(display_frame, bg="#fee4dc")
+player_frame.pack(side="left", padx=80, pady=20)
+
+ai_frame = tk.Frame(display_frame, bg="#fee4dc")
+ai_frame.pack(side="right", padx=80, pady=20)
+
+player_label = Label(player_frame, text="You Picked:", font=("Arial", 16), bg="#fee4dc", fg="black")
+player_label.pack()
+
+player_image_label = Label(player_frame, bg="#fee4dc")
+player_image_label.pack()
+
+ai_label = Label(ai_frame, text="AI Picked:", font=("Arial", 16), bg="#fee4dc", fg="black")
+ai_label.pack()
+
+ai_image_label = Label(ai_frame, bg="#fee4dc")
+ai_image_label.pack()
+
+# Game logic
+def get_winner(player, ai):
+    if player == ai:
+        return "Tie"
+    elif (player == "Rock" and ai == "Scissors") or \
+         (player == "Paper" and ai == "Rock") or \
+         (player == "Scissors" and ai == "Paper"):
+        return "Player"
+    else:
+        return "AI"
+
+def player_choice(choice):
+    global player_score, ai_score
+    ai_choice = random.choice(choices)
+
+    player_image_label.config(image=images[choice])
+    ai_image_label.config(image=images[ai_choice])
+
+    player_label.config(text=f"You Picked: {choice}")
+    ai_label.config(text=f"AI Picked: {ai_choice}")
+
+    winner = get_winner(choice, ai_choice)
+
+    if winner == "Player":
+        player_score += 1
+        result_label.config(text="You Win!", fg="green")
+    elif winner == "AI":
+        ai_score += 1
+        result_label.config(text="AI Wins!", fg="red")
+    else:
+        result_label.config(text="It's a Tie!", fg="black")
+
+    player_score_label.config(text=f"Player: {player_score}")
+    ai_score_label.config(text=f"AI: {ai_score}")
+
+# Bottom frame for buttons
+bottom_frame = tk.Frame(root, bg="#fee4dc")
+bottom_frame.pack(side="bottom", pady=30)
+
+button_row = tk.Frame(bottom_frame, bg="#fee4dc")
+button_row.pack()
+
+rock_frame = tk.Frame(button_row, bg="#fee4dc")
+rock_frame.grid(row=0, column=0, padx=40)
+rock_btn = Button(rock_frame, image=rock_img, command=lambda: player_choice("Rock"),
+                  borderwidth=0, relief="flat", bg="#fee4dc")
+rock_btn.grid(row=0, column=0)
+rock_label = Label(rock_frame, text="Rock", font=("Arial", 14), bg="#fee4dc", fg="black")
+rock_label.grid(row=1, column=0, pady=5)
+
+paper_frame = tk.Frame(button_row, bg="#fee4dc")
+paper_frame.grid(row=0, column=1, padx=40)
+paper_btn = Button(paper_frame, image=paper_img, command=lambda: player_choice("Paper"),
+                   borderwidth=0, relief="flat", bg="#fee4dc")
+paper_btn.grid(row=0, column=0)
+paper_label = Label(paper_frame, text="Paper", font=("Arial", 14), bg="#fee4dc", fg="black")
+paper_label.grid(row=1, column=0, pady=5)
+
+scissors_frame = tk.Frame(button_row, bg="#fee4dc")
+scissors_frame.grid(row=0, column=2, padx=40)
+scissors_btn = Button(scissors_frame, image=scissors_img, command=lambda: player_choice("Scissors"),
+                      borderwidth=0, relief="flat", bg="#fee4dc")
+scissors_btn.grid(row=0, column=0)
+scissors_label = Label(scissors_frame, text="Scissors", font=("Arial", 14), bg="#fee4dc", fg="black")
+scissors_label.grid(row=1, column=0, pady=5)
+
+# Background music
+try:
+    pygame.mixer.music.load("background.mp3")
+    pygame.mixer.music.play(-1, 0.0)
+except Exception as e:
+    print(f"Error loading music: {e}")
+
 root.mainloop()
